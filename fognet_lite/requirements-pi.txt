@@ -1,0 +1,5 @@
+# Raspberry Pi (64-bit Raspberry Pi OS) - no PyTorch needed
+numpy
+opencv-python
+onnxruntime
+# Pi Camera Module: install with apt instead ->  sudo apt install python3-picamera2

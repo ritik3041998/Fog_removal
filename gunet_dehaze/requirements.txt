@@ -1,0 +1,13 @@
+# gUNet dehazing track (training PC). Install PyTorch with CUDA first, e.g.
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126
+# On the Raspberry Pi you only need: onnxruntime, opencv-python, numpy
+opencv-python
+numpy
+tqdm
+pytorch-msssim
+tensorboard
+onnx
+onnxscript     # needed by torch.onnx.export on recent PyTorch
+onnxruntime
+gdown          # download official gUNet pretrained weights / datasets from Google Drive
+timm           # only for scripts/check_model.py equivalence test against official gUNet code

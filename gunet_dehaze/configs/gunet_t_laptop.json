@@ -1,0 +1,17 @@
+{
+  "model": "gunet_t",
+  "pad_mode": "zeros",
+  "patch_size": 256,
+  "batch_size": 16,
+  "lr": 2e-4,
+  "weight_decay": 0.01,
+  "epochs": 100,
+  "samples_per_epoch": 4096,
+  "warmup_epochs": 5,
+  "frozen_bn_epochs": 10,
+  "eval_every": 2,
+  "ssim_weight": 0.2,
+  "num_workers": 4,
+  "amp": true,
+  "max_val_items": 500
+}

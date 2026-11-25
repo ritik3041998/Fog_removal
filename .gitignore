@@ -1,0 +1,32 @@
+# Python / environments
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+
+# datasets (kept outside the repo, e.g. %USERPROFILE%\fogdata)
+data/
+fogdata/
+
+# training outputs, results, exports
+runs/
+results/
+exports/
+eval_samples/
+*.pt
+*.pth
+*.onnx
+*.hef
+
+# official gUNet clone (fetch with: git clone https://github.com/IDKiro/gUNet gunet_dehaze/third_party/gUNet)
+gunet_dehaze/third_party/
+
+# ...but ship the small pretrained DehazeFormer-MCT weights (MIT, 5.9 MB) so the repo runs out of the box
+!gunet_dehaze/pretrained/dehazeformer_demo/dehazeformer.pth
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
