@@ -23,7 +23,7 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.utils.data import DataLoader, RandomSampler
+from torch.utils.data import ConcatDataset, DataLoader, RandomSampler
 from torch.utils.tensorboard import SummaryWriter
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -58,7 +58,9 @@ DEFAULTS = {
 def parse_args():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--config", type=str, help="JSON config file")
-    p.add_argument("--train-dir", type=str)
+    p.add_argument("--train-dir", type=str, nargs="+",
+                   help="one or more folders with hazy + GT images; repeat a small folder "
+                        "(e.g. real-haze NH-HAZE2) several times to sample it more often")
     p.add_argument("--val-dir", type=str)
     p.add_argument("--init", type=str, help="initialise weights from a checkpoint (e.g. official gUNet)")
     p.add_argument("--out", type=str, default="runs/exp", help="output directory")
@@ -132,7 +134,11 @@ def main():
     (out_dir / "config.json").write_text(json.dumps(cfg, indent=2))
 
     # ---------------- data ----------------
-    train_set = PairDataset(cfg["train_dir"], "train", cfg["patch_size"], hflip=cfg["hflip"])
+    train_dirs = cfg["train_dir"] if isinstance(cfg["train_dir"], list) else [cfg["train_dir"]]
+    parts = [PairDataset(d, "train", cfg["patch_size"], hflip=cfg["hflip"]) for d in train_dirs]
+    for d, ds in zip(train_dirs, parts):
+        print(f"[train]   {len(ds):6d} pairs from {d}")
+    train_set = parts[0] if len(parts) == 1 else ConcatDataset(parts)
     sampler = RandomSampler(train_set, num_samples=cfg["samples_per_epoch"])
     train_loader = DataLoader(train_set, batch_size=cfg["batch_size"], sampler=sampler,
                               num_workers=cfg["num_workers"], pin_memory=True, drop_last=True,

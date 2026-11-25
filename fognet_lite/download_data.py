@@ -1,7 +1,7 @@
 """Download fog datasets from Hugging Face mirrors (the official Google Drive / Baidu links are dead).
 
     pip install huggingface_hub pyarrow
-    python download_data.py --root %USERPROFILE%/fogdata              # everything below (~2.1 GB)
+    python download_data.py --root %USERPROFILE%/fogdata              # everything below (~2.3 GB)
     python download_data.py --root ~/fogdata --only reside6k sots
 
 Result:
@@ -10,12 +10,13 @@ Result:
   <root>/SOTS/outdoor/{hazy,gt}      500 outdoor pairs, the standard benchmark       -> testing
   <root>/SOTS/indoor/{hazy,gt}       500 indoor pairs
   <root>/NH-HAZE2/...                real (not computer-generated) non-uniform haze pairs -> real-fog test
+  <root>/RTTS/images/test            649 real-world foggy photos, no clear version   -> real-fog visual test
 """
 import argparse
 import os
 import zipfile
 
-from huggingface_hub import hf_hub_download
+from huggingface_hub import hf_hub_download, snapshot_download
 
 
 def unzip(path, dest):
@@ -62,10 +63,10 @@ def reside6k_from_parquet(dest, splits):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default=os.path.join(os.path.expanduser("~"), "fogdata"))
-    ap.add_argument("--only", nargs="*", choices=["reside6k", "sots", "nhhaze2"])
+    ap.add_argument("--only", nargs="*", choices=["reside6k", "sots", "nhhaze2", "rtts"])
     ap.add_argument("--with-6k-test", action="store_true")
     args = ap.parse_args()
-    want = set(args.only or ["reside6k", "sots", "nhhaze2"])
+    want = set(args.only or ["reside6k", "sots", "nhhaze2", "rtts"])
     os.makedirs(args.root, exist_ok=True)
 
     if "reside6k" in want:
@@ -79,6 +80,9 @@ def main():
         z = hf_hub_download("zhangxiaolin/NH-HAZE2", "data-20250125T101253Z-001.zip", repo_type="dataset",
                             local_dir=os.path.join(args.root, "_zips"))
         unzip(z, os.path.join(args.root, "NH-HAZE2"))
+    if "rtts" in want:
+        snapshot_download("Leoxuhan/RTTS_YOLO", repo_type="dataset", allow_patterns=["images/test/*"],
+                          local_dir=os.path.join(args.root, "RTTS"), max_workers=16)
     print("done:", args.root)
 
 

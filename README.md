@@ -9,6 +9,8 @@ a clear image. Models are trained on a PC GPU, exported to ONNX, and run on a Ra
 ![Hazy / output / ground truth](docs/images/reside_hazy_output_gt.jpg)
 *RESIDE benchmark image: hazy input, model output, true clear image.*
 
+> **Just want the commands?** See **[RUN_COMMANDS.md](RUN_COMMANDS.md)**: every command, in order, ready to paste.
+
 ## Contents
 
 | Folder | What it is | Use it for |
@@ -139,12 +141,31 @@ python scripts/test_pretrained.py --model gunet --ckpt runs/gunet_t/best.pth --p
 
 cd ../fognet_lite
 python compare.py --hazy ~/fogdata/SOTS/SOTS/outdoor/hazy --clear ~/fogdata/SOTS/SOTS/outdoor/gt \
-                  --model fognet.onnx --external ../gunet_dehaze/results/sots --samples 6
+                  --model fognet.onnx --external ../gunet_dehaze/results/sots/imgs --samples 6
 ```
 
-Results so far (pretrained DehazeFormer-MCT, 200 RESIDE-6K pairs): hazy input **15.29 dB**, output
-**27.71 dB PSNR / 0.919 SSIM**. This may be optimistic because the model's training mix may contain RESIDE
-images. SOTS-outdoor is the fair test.
+### Results so far: pretrained DehazeFormer-MCT
+
+| Test set | Hazy input | Dehazed |
+|---|---|---|
+| SOTS-outdoor (500 pairs, synthetic fog, standard benchmark) | 15.92 dB | **31.03 dB PSNR / 0.981 SSIM** |
+| NH-HAZE2 test (10 pairs, **real**, dense non-uniform haze) | 12.28 dB | **16.61 dB PSNR / 0.791 SSIM** |
+| RESIDE-6K train (200 pairs) | 15.29 dB | 27.71 dB / 0.919 |
+| 23 real foggy photos from Wikimedia Commons (no GT) | | fog score lower on 21/23 |
+
+Here is how the output looks on those photos:
+- **Light and medium haze and city smog:** clearly better, with more contrast, natural colours and blue sky restored.
+- **Some smog scenes:** the objects come out clearer, but the sky can get a brownish tint.
+- **Dense white fog:** the model **makes up detail** (fake sky or cloud texture, smeared patches). When fog
+  completely hides the scene, nothing is left to recover. Use `--fog-threshold`, and fine-tune on real fog from
+  your own camera.
+
+Get more real test photos with `python scripts/download_test_images.py` (Wikimedia Commons; the author and license
+of each image are saved in `credits.csv`). The photos used here are in `gunet_dehaze/samples/internet/`.
+
+![Real smog: input vs dehazed](docs/images/real_smog_saltlake.jpg)
+*Salt Lake City smog: input (left), dehazed (right). Photo: Eltiempo10,
+[CC BY-SA 4.0](https://commons.wikimedia.org/wiki/File:Salt_Lake_City_smog_haze_skyline_01.jpg), dehazed by this model.*
 
 ## 6. Export and run on the Raspberry Pi
 

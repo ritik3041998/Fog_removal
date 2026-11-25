@@ -49,6 +49,10 @@ class FogNetLite(nn.Module):
         self.c4 = DSConv(2 * w, w, 7, dilation=2)  # very large context (global fog level)
         self.head = nn.Conv2d(4 * w, 3, 3, padding=1)
         self.b = 1.0
+        # Start as the identity: K = 1 gives J = I. softplus(0.5413) = 1, and small head weights
+        # keep K close to 1 everywhere, so training starts from "output = input" rather than noise.
+        nn.init.normal_(self.head.weight, std=1e-3)
+        nn.init.constant_(self.head.bias, 0.5413)
 
     def estimate_k(self, x):
         x0 = self.stem(x)
@@ -56,7 +60,9 @@ class FogNetLite(nn.Module):
         x2 = self.c2(x1)
         x3 = self.c3(torch.cat([x1, x2], 1))
         x4 = self.c4(torch.cat([x2, x3], 1))
-        return F.relu(self.head(torch.cat([x1, x2, x3, x4], 1)))
+        # softplus, not ReLU: AOD-Net's ReLU here can die for a whole colour channel
+        # (K = 0 -> that channel is stuck at 1, washed-out output); softplus always has a gradient.
+        return F.softplus(self.head(torch.cat([x1, x2, x3, x4], 1)))
 
     def forward(self, img):
         """img: (N,3,H,W) RGB in [0,1]. Returns the dehazed image in [0,1]."""
